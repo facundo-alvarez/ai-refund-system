@@ -26,9 +26,13 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 order_id TEXT NOT NULL,
                 category_id INTEGER,
-                status_id INTEGER,
+                status_id INTEGER DEFAULT 1,
+                predicted_category_id INTEGER,
+                confidence  REAL,
+                image_path TEXT,
                 FOREIGN KEY (category_id) REFERENCES categories (id),
-                FOREIGN KEY (status_id) REFERENCES statuses (id)
+                FOREIGN KEY (status_id) REFERENCES statuses (id),
+                FOREIGN KEY (predicted_category_id) REFERENCES categories (id)
             )
         ''')
         
