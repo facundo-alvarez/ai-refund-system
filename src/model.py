@@ -30,7 +30,6 @@ class ImageClassifier(nn.Module):
         self.transforms = torchvision.models.ResNet50_Weights.IMAGENET1K_V2.transforms()
 
     def forward(self, x : Tensor) -> Tensor:
-        x = self.flatten(x)
         return self.model.forward(x)
     
     def transform(self, x : Image.Image) -> Tensor:

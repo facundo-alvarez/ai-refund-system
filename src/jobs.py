@@ -3,10 +3,9 @@ import sqlite3
 import logging
 from pathlib import Path
 from typing import List, Dict, Generator
-import helpers
 from model import ImageClassifier
-from torch import nn, Tensor
-from PIL import Image, ImageFile.
+from torch import Tensor
+from PIL import Image
 
 # ==========================
 # Config
@@ -14,7 +13,7 @@ from PIL import Image, ImageFile.
 
 DB_PATH = "src/database.db"
 BATCH_SIZE = 32
-IMAGE_FOLDER = Path("src/images")
+IMAGE_FOLDER = "src/images"
 
 
 # ==========================
@@ -25,7 +24,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 # ==========================
 # Database
@@ -41,9 +39,15 @@ def fetch_new_items() -> List[Dict]:
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, image_path, category_id
-        FROM returns
-        WHERE status_id = 'NEW'
+        SELECT
+            r.id,
+            r.image_path,
+            r.category_id,
+            s.name
+        FROM returns r
+        JOIN statuses s
+        ON r.status_id = s.id
+        WHERE s.name = 'New'
     """)
 
     rows = cursor.fetchall()
@@ -106,43 +110,46 @@ def load_model() -> ImageClassifier:
 
 def preprocess_image(model : ImageClassifier, path : str) -> Tensor:
     
-    img = Image.open(path)
+    img = Image.open(Path(IMAGE_FOLDER, path))
 
     if img.mode != "RGB":
         img = img.convert("RGB")
 
     return model.transform(img)
 
-def predict_batch(model : ImageClassifier, batch : List[Dict]):
+def predict_batch(model : ImageClassifier, batch : List[Dict]) -> List[Dict]:
     
-    processed_images : List[Dict] = []
+    predictions = []
 
     for item in batch:
-        image_path = item[1]
-        img = preprocess_image(model, image_path)
-        processed_images.append({"id": item[0], "image": img, "category_id": item[2]})
-        
-    predictions = [model.forward(result[1]) for result in processed_images]
 
+        img = preprocess_image(model, item["image_path"])
+        pred = model.forward(img)
 
+        probs = pred.softmax(dim=1)
+        predicted_class = probs.argmax(dim=1).item()
+        confidence = probs.max().item()
+
+        predictions.append({
+            "id": item["id"],
+            "class": predicted_class,
+            "confidence": confidence,
+            "category_id": item["category_id"]
+        })
+
+    return predictions
 
 
 # ==========================
 # Validation
 # ==========================
 
-def validate_prediction(
-    submitted_category,
-    predicted_category,
-    confidence
-):
-    """
-    Decide final status:
-    OK / FLAGGED / UNCERTAIN
-    """
-
-    pass
-
+def validate_prediction(submitted_category : int, predicted_category : int, confidence : float) -> str:
+    
+    if confidence < 0.7 or submitted_category != predicted_category:
+        return "Flagged"
+    
+    return "Processed"
 
 # ==========================
 # Processing Pipeline
@@ -193,6 +200,7 @@ def run():
 
     logging.info("Nightly batch finished")
 
-
 if __name__ == "__main__":
     run()
+
+run()
