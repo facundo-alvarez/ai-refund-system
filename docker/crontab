@@ -1,0 +1,1 @@
+* * * * * python /src/jobs.py >> /src/logs/jobs.log 2>&1

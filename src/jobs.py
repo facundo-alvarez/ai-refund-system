@@ -11,9 +11,9 @@ from PIL import Image
 # Config
 # ==========================
 
-DB_PATH = "src/database.db"
+DB_PATH = "database.db"
 BATCH_SIZE = 32
-IMAGE_FOLDER = "src/images"
+IMAGE_FOLDER = "images"
 
 
 # ==========================
@@ -202,5 +202,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
-run()
