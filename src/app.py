@@ -10,7 +10,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 
 def get_db_connection():
-    conn = sqlite3.connect("src/database.db")
+    conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -38,7 +38,7 @@ def upload():
     image_b64 = data["image"]
     unique_filename = f"{order_id}_{timestamp}"
     image_bytes = base64.b64decode(image_b64)
-    image_path = f"src/images/{unique_filename}.jpg"
+    image_path = f"{UPLOAD_FOLDER}/{unique_filename}.jpg"
 
     with open(image_path, "wb") as f:
         f.write(image_bytes)
