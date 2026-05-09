@@ -38,7 +38,7 @@ def upload():
     image_b64 = data["image"]
     unique_filename = f"{order_id}_{timestamp}"
     image_bytes = base64.b64decode(image_b64)
-    image_path = f"images/{unique_filename}.jpg"
+    image_path = f"src/images/{unique_filename}.jpg"
 
     with open(image_path, "wb") as f:
         f.write(image_bytes)
