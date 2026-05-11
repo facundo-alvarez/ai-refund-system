@@ -4,10 +4,9 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.web
     ports:
-      - "${APP_PORT}:5000"
+      - "5000:5000"
 
   worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile.worker
-    command: python jobs.py

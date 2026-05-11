@@ -6,6 +6,7 @@ from typing import List, Dict, Generator
 from model import ImageClassifier
 from torch import Tensor
 from PIL import Image
+from datetime import datetime
 
 # ==========================
 # Config
@@ -191,14 +192,16 @@ def run():
 
     if not items:
         logging.info("No new items found")
-        return
+    else:
+        logging.info(f"Found {len(items)} new items")
 
-    logging.info(f"Found {len(items)} new items")
+        for batch in chunk(items, BATCH_SIZE):
+            process_batch(model, batch)
 
-    for batch in chunk(items, BATCH_SIZE):
-        process_batch(model, batch)
+        logging.info("Nightly batch finished")
 
-    logging.info("Nightly batch finished")
+    with open("/var/log/cron.log", "a") as f:
+        f.write(f"Run on: {datetime.now()}\n")
 
 if __name__ == "__main__":
     run()
