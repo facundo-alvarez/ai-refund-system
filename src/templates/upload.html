@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Order</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 100px auto;
+        }
+
+        input, select, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Upload Order</h1>
+
+<form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="text" name="order_id" placeholder="Order ID" required>
+
+    <select name="category_id" required>
+        <option value="1">Dress</option>
+        <option value="2">Hat</option>
+        <option value="3">Longsleeve</option>
+        <option value="4">Outwear</option>
+        <option value="5">Pants</option>
+        <option value="6">Shirt</option>
+        <option value="7">Shoes</option>
+        <option value="8">Shorts</option>
+        <option value="9">Skirt</option>
+        <option value="10">T-Shirt</option>
+    </select>
+
+    <input type="file" name="file" accept="image/*" required>
+
+    <button type="submit">Upload</button>
+</form>
+
+</body>
+</html>

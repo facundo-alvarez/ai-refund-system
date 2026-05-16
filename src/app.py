@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import sqlite3
 import os
+import requests
 from datetime import datetime
 import base64
 
@@ -26,6 +27,34 @@ def dashboard():
         ).fetchall()
     conn.close()
     return render_template("returns.html", returns=returns)
+
+
+@app.route("/upload", methods=["GET"])
+def upload_page():
+    return render_template("upload.html")
+
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    file = request.files["file"]
+    order_id = request.form["order_id"]
+    category_id = int(request.form["category_id"])
+
+    image_bytes = file.read()
+    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    payload = {
+        "order_id": order_id,
+        "category_id": category_id,
+        "image": image_base64
+    }
+
+    response = requests.post(
+        "http://127.0.0.1:5000/api/upload",
+        json=payload
+    )
+
+    return response.text, response.status_code
 
 
 @app.route("/api/upload", methods=["POST"])
