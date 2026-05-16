@@ -24,7 +24,7 @@ class DatabaseManager:
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS returns (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                order_id TEXT NOT NULL,
+                order_id TEXT NOT NULL UNIQUE,
                 category_id INTEGER,
                 status_id INTEGER DEFAULT 1,
                 predicted_category_id INTEGER,
@@ -42,9 +42,9 @@ class DatabaseManager:
     def _seed_data(self):
         """Populates lookup tables if empty."""
         categories = [
-            ('Electronics',), ('Apparel',), ('Home & Kitchen',), ('Beauty',), 
-            ('Toys',), ('Sports',), ('Books',), ('Automotive',), 
-            ('Groceries',), ('Pet Supplies',)
+            ('Dress',), ('Hat',), ('Longsleeve',), ('Outwear',), 
+            ('Pants',), ('Shirt',), ('Shoes',), ('Shorts',), 
+            ('Skirt',), ('T-Shirt',)
         ]
         statuses = [('New',), ('Processed',), ('Flagged',)]
         
@@ -53,3 +53,8 @@ class DatabaseManager:
 
     def close(self):
         self.connection.close()
+
+
+if __name__ == "__main__":
+    db = DatabaseManager("database.db")
+    db.setup_database()

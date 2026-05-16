@@ -8,16 +8,16 @@ class ImageClassifier(nn.Module):
         super().__init__()
 
         classes = [
-            'Electronics', 
-            'Apparel', 
-            'Home & Kitchen', 
-            'Beauty', 
-            'Toys', 
-            'Sports', 
-            'Books', 
-            'Automotive', 
-            'Groceries', 
-            'Pet Supplies']
+            'Dress', 
+            'Hat', 
+            'Longsleeve', 
+            'Outwear', 
+            'Pants', 
+            'Shirt', 
+            'Shoes', 
+            'Shorts', 
+            'Skirt', 
+            'T-Shirt']
 
         num_classes = len(classes)
         model = torchvision.models.resnet152(weights='ResNet152_Weights.DEFAULT')
