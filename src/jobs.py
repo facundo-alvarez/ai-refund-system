@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Generator
 from model import ImageClassifier
+import torch
 from torch import Tensor
 from PIL import Image
 from datetime import datetime
@@ -15,6 +16,7 @@ from datetime import datetime
 DB_PATH = "database.db"
 BATCH_SIZE = 32
 IMAGE_FOLDER = "images"
+MODEL_WEIGHTS = "models/best_model.pth"
 
 
 # ==========================
@@ -106,8 +108,13 @@ def chunk(items: List[Dict], batch_size: int) -> Generator[List[Dict], None, Non
 # Model Inference
 # ==========================
 
-def load_model() -> ImageClassifier:
-    return ImageClassifier()
+def load_model(weights:str, device="cpu") -> ImageClassifier:
+    model = ImageClassifier()
+    checkpoint = torch.load(weights, map_location=device)
+    model.to(device)
+    model.load_state_dict(checkpoint["model_state_dict"]) 
+    model.eval()
+    return model
 
 def preprocess_image(model : ImageClassifier, path : str) -> Tensor:
     
@@ -118,14 +125,15 @@ def preprocess_image(model : ImageClassifier, path : str) -> Tensor:
 
     return model.transform(img)
 
-def predict_batch(model : ImageClassifier, batch : List[Dict]) -> List[Dict]:
+def predict_batch(model : ImageClassifier, batch : List[Dict], device='cpu') -> List[Dict]:
     
     predictions = []
 
     for item in batch:
 
         img = preprocess_image(model, item["image_path"])
-        pred = model.forward(img)
+        img = img.to(device)
+        pred = model(img)
 
         probs = pred.softmax(dim=1)
         predicted_class = probs.argmax(dim=1).item()
@@ -147,7 +155,7 @@ def predict_batch(model : ImageClassifier, batch : List[Dict]) -> List[Dict]:
 
 def validate_prediction(submitted_category : int, predicted_category : int, confidence : float) -> str:
     
-    if confidence < 0.7 or submitted_category != predicted_category:
+    if confidence < 0.7 or submitted_category != predicted_category + 1:
         return "Flagged"
     
     return "Processed"
@@ -156,11 +164,11 @@ def validate_prediction(submitted_category : int, predicted_category : int, conf
 # Processing Pipeline
 # ==========================
 
-def process_batch(model : ImageClassifier, batch : List[Dict]):
+def process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
 
     logging.info(f"Processing batch size={len(batch)}")
 
-    predictions = predict_batch(model, batch)
+    predictions = predict_batch(model, batch, device)
 
     for item, pred in zip(batch, predictions):
 
@@ -186,7 +194,9 @@ def run():
 
     logging.info("Nightly batch started")
 
-    model = load_model()
+    device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
+    model = load_model(MODEL_WEIGHTS, device)
 
     items = fetch_new_items()
 
@@ -196,7 +206,7 @@ def run():
         logging.info(f"Found {len(items)} new items")
 
         for batch in chunk(items, BATCH_SIZE):
-            process_batch(model, batch)
+            process_batch(model, batch, device)
 
         logging.info("Nightly batch finished")
 

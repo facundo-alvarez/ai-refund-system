@@ -1,9 +1,6 @@
-import os
 import torchvision
 import torch
 from torch import nn, Tensor
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 from PIL import Image
 
 class ImageClassifier(nn.Module):
@@ -23,14 +20,13 @@ class ImageClassifier(nn.Module):
             'Pet Supplies']
 
         num_classes = len(classes)
-        model = torchvision.models.resnet50(weights='ResNet50_Weights.DEFAULT')
+        model = torchvision.models.resnet152(weights='ResNet152_Weights.DEFAULT')
         model.fc = nn.Linear(model.fc.in_features, num_classes)
         self.model = model
-        self.flatten = nn.Flatten()
-        self.transforms = torchvision.models.ResNet50_Weights.IMAGENET1K_V2.transforms()
+        self.transforms = torchvision.models.ResNet152_Weights.IMAGENET1K_V2.transforms()
 
     def forward(self, x : Tensor) -> Tensor:
-        return self.model.forward(x)
+        return self.model(x)
     
     def transform(self, x : Image.Image) -> Tensor:
         x_tensor = self.transforms(x)
