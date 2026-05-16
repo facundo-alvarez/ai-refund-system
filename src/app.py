@@ -53,13 +53,31 @@ def upload_file():
         "image": image_base64
     }
 
-    response = requests.post(
-        "http://127.0.0.1:5000/api/upload",
-        json=payload
-    )
+    try:
+        response = requests.post(
+            "http://127.0.0.1:5000/api/upload",
+            json=payload,
+            timeout=10
+        )
 
-    return response.text, response.status_code
+        success = response.status_code == 200
 
+        return render_template(
+            "upload_result.html",
+            success=success,
+            status_code=response.status_code,
+            response_text=response.text,
+            order_id=order_id
+        )
+
+    except Exception as e:
+        return render_template(
+            "upload_result.html",
+            success=False,
+            status_code=500,
+            response_text=str(e),
+            order_id=order_id
+        )
 
 @app.route("/api/upload", methods=["POST"])
 def upload():
