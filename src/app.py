@@ -68,6 +68,7 @@ def upload():
     unique_filename = f"{order_id}_{timestamp}"
     image_bytes = base64.b64decode(image_b64)
     image_path = f"{UPLOAD_FOLDER}/{unique_filename}.jpg"
+    image_name = f"{unique_filename}.jpg"
 
     with open(image_path, "wb") as f:
         f.write(image_bytes)
@@ -86,7 +87,7 @@ def upload():
         """, (
         order_id,
         category_id,
-        image_path
+        image_name
     ))
 
     conn.commit()
@@ -94,7 +95,7 @@ def upload():
 
     return jsonify({
         "message": "uploaded",
-        "path": image_path
+        "path": image_name
     })
 
 if __name__ == "__main__":
