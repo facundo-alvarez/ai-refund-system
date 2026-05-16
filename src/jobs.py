@@ -85,7 +85,7 @@ def update_prediction(
             status_id = ?
         WHERE id = ?
     """, (
-        predicted_category,
+        predicted_category + 1,
         confidence,
         status,
         item_id
@@ -171,15 +171,16 @@ def process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
 
     for item, pred in zip(batch, predictions):
 
+        predicted = pred["class"] + 1
         status = validate_prediction(
             submitted_category=item["category_id"],
-            predicted_category=pred["class"],
+            predicted_category=predicted,
             confidence=pred["confidence"]
         )
 
         update_prediction(
             item_id=item["id"],
-            predicted_category=pred["class"],
+            predicted_category=predicted,
             confidence=pred["confidence"],
             status=status
         )
