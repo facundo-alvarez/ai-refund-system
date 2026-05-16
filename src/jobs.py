@@ -172,16 +172,18 @@ def process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
     for item, pred in zip(batch, predictions):
 
         predicted = pred["class"] + 1
+        confidence = pred["confidence"]
+
         status = validate_prediction(
             submitted_category=item["category_id"],
             predicted_category=predicted,
-            confidence=pred["confidence"]
+            confidence=confidence
         )
 
         update_prediction(
             item_id=item["id"],
             predicted_category=predicted,
-            confidence=pred["confidence"],
+            confidence=confidence,
             status=status
         )
 
