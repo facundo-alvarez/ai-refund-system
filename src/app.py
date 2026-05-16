@@ -20,9 +20,13 @@ def dashboard():
     conn = get_db_connection()
     returns = conn.execute(
         """
-        SELECT returns.*, categories.name AS category_name
-        FROM returns
-        JOIN categories ON returns.category_id = categories.id
+        SELECT 
+            r.order_id,
+            c.name AS category,
+            s.name AS status
+        FROM returns r
+        JOIN categories c ON c.id = r.category_id
+        JOIN statuses s ON s.id = r.status_id;
         """
         ).fetchall()
     conn.close()

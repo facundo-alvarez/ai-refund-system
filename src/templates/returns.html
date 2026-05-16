@@ -8,7 +8,6 @@
 
     <table border="1">
         <tr>
-            <th>ID</th>
             <th>Order ID</th>
             <th>Category</th>
             <th>Status</th>
@@ -16,10 +15,9 @@
 
         {% for return in returns %}
         <tr>
-            <td>{{ return["id"] }}</td>
             <td>{{ return["order_id"] }}</td>
-            <td>{{ return["category_name"] }}</td>
-            <td>{{ return["status_id"] }}</td>
+            <td>{{ return["category"] }}</td>
+            <td>{{ return["status"] }}</td>
         </tr>
         {% endfor %}
     </table>
