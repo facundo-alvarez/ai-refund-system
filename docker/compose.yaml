@@ -5,8 +5,14 @@ services:
       dockerfile: docker/Dockerfile.web
     ports:
       - "5000:5000"
+    volumes:
+      - ../src/database.db:/src/database.db
+    restart: unless-stopped
 
   worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile.worker
+    volumes:
+      - ../src/database.db:/src/database.db
+    restart: unless-stopped
