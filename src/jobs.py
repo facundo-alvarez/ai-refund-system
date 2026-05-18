@@ -8,36 +8,31 @@ from torch import Tensor
 from PIL import Image
 from datetime import datetime
 
-# ==========================
-# Config
-# ==========================
+# Configuration constants
 
 DB_PATH = "database.db"
 BATCH_SIZE = 32
 IMAGE_FOLDER = "images"
 MODEL_WEIGHTS = "models/best_model.pth"
 
+# Logging config
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# ==========================
-# Logging
-# ==========================
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+def __get_connection():
+    """
+    Opens the connection to the database
+    """
 
-# ==========================
-# Database
-# ==========================
-
-def get_connection():
     return sqlite3.connect(DB_PATH)
 
 
-def fetch_new_items() -> List[Dict]:
+def __fetch_new_items() -> List[Dict]:
+    """
+    Gets new items from the database that with the flag 'New'
+    """
 
-    conn = get_connection()
+    conn = __get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -65,7 +60,7 @@ def fetch_new_items() -> List[Dict]:
     ]
 
 
-def update_prediction(
+def __update_prediction(
     item_id: int,
     predicted_category: int,
     confidence: float,
@@ -75,7 +70,7 @@ def update_prediction(
     Update processed item
     """
 
-    conn = get_connection()
+    conn = __get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -95,19 +90,16 @@ def update_prediction(
     conn.close()
 
 
-# ==========================
-# Batch Helpers
-# ==========================
-
-def chunk(items: List[Dict], batch_size: int) -> Generator[List[Dict], None, None]:
+def __chunk(items: List[Dict], batch_size: int) -> Generator[List[Dict], None, None]:
+    """ A helper function that takes a batch of items and returns a generator """
     for i in range(0, len(items), batch_size):
         yield items[i:i + batch_size]
 
-# ==========================
-# Model Inference
-# ==========================
 
-def load_model(weights:str, device="cpu") -> ImageClassifier:
+def __load_model(weights:str, device="cpu") -> ImageClassifier:
+    """
+    Loads the image classifier model and uses the stored weights for the model
+    """
     model = ImageClassifier()
     checkpoint = torch.load(weights, map_location=device)
     model.to(device)
@@ -115,8 +107,12 @@ def load_model(weights:str, device="cpu") -> ImageClassifier:
     model.eval()
     return model
 
-def preprocess_image(model : ImageClassifier, path : str) -> Tensor:
-    
+
+def __preprocess_image(model : ImageClassifier, path : str) -> Tensor:
+    """
+    The actual processing of the image
+    """
+
     img = Image.open(Path(IMAGE_FOLDER, path))
 
     if img.mode != "RGB":
@@ -124,13 +120,16 @@ def preprocess_image(model : ImageClassifier, path : str) -> Tensor:
 
     return model.transform(img)
 
-def predict_batch(model : ImageClassifier, batch : List[Dict], device='cpu') -> List[Dict]:
-    
+
+def __predict_batch(model : ImageClassifier, batch : List[Dict], device='cpu') -> List[Dict]:
+    """
+    Takes a batch of results, process them and run predictions that are returned as a dictionary
+    """
     predictions = []
 
     for item in batch:
 
-        img = preprocess_image(model, item["image_path"])
+        img = __preprocess_image(model, item["image_path"])
         img = img.to(device)
         pred = model(img)
 
@@ -148,39 +147,39 @@ def predict_batch(model : ImageClassifier, batch : List[Dict], device='cpu') -> 
     return predictions
 
 
-# ==========================
-# Validation
-# ==========================
+def __validate_prediction(submitted_category : int, predicted_category : int, confidence : float) -> str:
+    """ 
+    Validation logic of the image classifier output 
+    """
 
-def validate_prediction(submitted_category : int, predicted_category : int, confidence : float) -> str:
-    
     if confidence < 0.7 or submitted_category != predicted_category + 1:
         return "Flagged"
     
     return "Processed"
 
-# ==========================
-# Processing Pipeline
-# ==========================
 
-def process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
+def __process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
+    """
+    Process the batch of data using the provided image classifier and 
+    validates against the database and update the record.
+    """
 
     logging.info(f"Processing batch size={len(batch)}")
 
-    predictions = predict_batch(model, batch, device)
+    predictions = __predict_batch(model, batch, device)
 
     for item, pred in zip(batch, predictions):
 
         predicted = pred["class"] + 1
         confidence = pred["confidence"]
 
-        status = validate_prediction(
+        status = __validate_prediction(
             submitted_category=item["category_id"],
             predicted_category=predicted,
             confidence=confidence
         )
 
-        update_prediction(
+        __update_prediction(
             item_id=item["id"],
             predicted_category=predicted,
             confidence=confidence,
@@ -188,32 +187,32 @@ def process_batch(model : ImageClassifier, batch : List[Dict], device = 'cpu'):
         )
 
 
-# ==========================
-# Main Cron Entry
-# ==========================
-
-def run():
+def __run():
+    """
+    Main cron job entry point
+    """
 
     logging.info("Nightly batch started")
 
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 
-    model = load_model(MODEL_WEIGHTS, device)
+    model = __load_model(MODEL_WEIGHTS, device)
 
-    items = fetch_new_items()
+    items = __fetch_new_items()
 
     if not items:
         logging.info("No new items found")
     else:
         logging.info(f"Found {len(items)} new items")
 
-        for batch in chunk(items, BATCH_SIZE):
-            process_batch(model, batch, device)
+        for batch in __chunk(items, BATCH_SIZE):
+            __process_batch(model, batch, device)
 
         logging.info("Nightly batch finished")
 
     with open("/var/log/cron.log", "a") as f:
         f.write(f"Run on: {datetime.now()}\n")
 
+
 if __name__ == "__main__":
-    run()
+    __run()

@@ -9,6 +9,9 @@ from model import ImageClassifier
 import os
 
 def main():
+    """
+    Train routine for fine tuning the ResNet152 with the new data
+    """
 
     image_transform = ResNet152_Weights.IMAGENET1K_V2.transforms()
     g = torch.Generator()

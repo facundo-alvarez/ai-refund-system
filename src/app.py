@@ -10,14 +10,20 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 
-def get_db_connection():
+def __get_db_connection():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 @app.route("/dashboard")
 def dashboard():
-    conn = get_db_connection()
+    """
+    Render the dashboard page.
+
+    Returns:
+        str: Rendered HTML for the dashboard.
+    """
+    conn = __get_db_connection()
     returns = conn.execute(
         """
         SELECT 
@@ -35,11 +41,31 @@ def dashboard():
 
 @app.route("/upload", methods=["GET"])
 def upload_page():
+    """
+    Render the returns form page.
+
+    Returns:
+        str: Rendered HTML for the dashboard.
+    """
     return render_template("upload.html")
 
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
+    """
+    Handle file upload requests.
+
+    Receives an uploaded file, order and category from the form,
+    converts the file to Base64, and forwards the data to the internal
+    upload API endpoint.
+
+    Returns:
+        Response: Rendered upload result page containing:
+            - success status
+            - HTTP status code
+            - API response text or error message
+            - order ID
+    """
     file = request.files["file"]
     order_id = request.form["order_id"]
     category_id = int(request.form["category_id"])
@@ -81,6 +107,22 @@ def upload_file():
 
 @app.route("/api/upload", methods=["POST"])
 def upload():
+    """
+    Process image upload API requests.
+
+    Accepts JSON payload containing an order, category and a Base64-encoded image.
+    Decodes and saves the image to disk, then stores metadata in the database.
+
+    Expected JSON:
+        {
+            "order_id": str,
+            "category_id": int,
+            "image": str (base64 encoded)
+        }
+
+    Returns:
+        JSON: Confirmation message and saved image filename.
+    """
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     data = request.get_json()
@@ -95,7 +137,7 @@ def upload():
     with open(image_path, "wb") as f:
         f.write(image_bytes)
 
-    conn = get_db_connection()
+    conn = __get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
         """

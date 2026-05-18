@@ -3,7 +3,18 @@ import pandas as pd
 from torch.utils.data import Dataset
 from PIL import Image
 
+
 class FashionDataset(Dataset):
+    """
+    Custom dataset for loading fashion images and annotations.
+
+    Attributes:
+        annotations_file (str): Path to the annotations file.
+        img_dir (str): Directory containing images.
+        transform (callable, optional): Transform applied to images.
+        target_transform (callable, optional): Transform applied to labels.
+    """
+     
     def __init__(self, annotations_file : str, img_dir : str, transform=None, target_transform=None) -> None:
         super().__init__()
         self.img_labels = pd.read_csv(annotations_file)
