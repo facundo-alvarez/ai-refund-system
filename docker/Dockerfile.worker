@@ -12,7 +12,7 @@ COPY src/ .
 
 RUN touch /var/log/cron.log
 
-RUN echo "* * * * * root cd /src && /usr/local/bin/ipython3 jobs.py" > /etc/cron.d/jobs
+RUN echo "0 2 * * * root cd /src && /usr/local/bin/ipython3 jobs.py" > /etc/cron.d/jobs
 RUN chmod 0644 /etc/cron.d/jobs
 
 CMD ["cron", "-f"]
