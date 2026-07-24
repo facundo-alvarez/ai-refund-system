@@ -1,8 +1,10 @@
+import os
 import sqlite3
 import logging
 from pathlib import Path
 from typing import List, Dict, Generator
 from model import ImageClassifier
+from db import DatabaseInitializer
 import torch
 from torch import Tensor
 from PIL import Image
@@ -10,7 +12,7 @@ from datetime import datetime
 
 # Configuration constants
 
-DB_PATH = "database.db"
+DB_PATH = os.path.join("instance", "database.db")
 BATCH_SIZE = 32
 IMAGE_FOLDER = "images"
 MODEL_WEIGHTS = "models/best_model.pth"
@@ -68,10 +70,16 @@ def __update_prediction(
 ):
     """
     Update processed item
+
+    `status` is the status *name* (e.g. "Flagged"); it is resolved to the
+    matching statuses.id before the write since status_id is a foreign key.
     """
 
     conn = __get_connection()
     cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM statuses WHERE name = ?", (status,))
+    status_id = cursor.fetchone()[0]
 
     cursor.execute("""
         UPDATE returns
@@ -82,7 +90,7 @@ def __update_prediction(
     """, (
         predicted_category + 1,
         confidence,
-        status,
+        status_id,
         item_id
     ))
 
@@ -194,6 +202,17 @@ def __run():
 
     logging.info("Nightly batch started")
 
+    db_init = DatabaseInitializer(DB_PATH)
+    db_init.setup_database()
+    db_init.close()
+
+    if not os.path.exists(MODEL_WEIGHTS):
+        logging.warning(
+            "No model weights found at '%s' - skipping batch run. "
+            "Train a model first (see README).", MODEL_WEIGHTS
+        )
+        return
+
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 
     model = __load_model(MODEL_WEIGHTS, device)
@@ -210,8 +229,12 @@ def __run():
 
         logging.info("Nightly batch finished")
 
-    with open("/var/log/cron.log", "a") as f:
-        f.write(f"Run on: {datetime.now()}\n")
+    try:
+        with open("/var/log/cron.log", "a") as f:
+            f.write(f"Run on: {datetime.now()}\n")
+    except OSError:
+        # /var/log/cron.log only exists inside the worker Docker image.
+        pass
 
 
 if __name__ == "__main__":

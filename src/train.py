@@ -55,7 +55,7 @@ def main():
 
     size = len(train_loader.dataset)
 
-    epochs = 200
+    epochs = 10
     patience = 5
     best_val_loss = float("inf")
     patience_counter = 0

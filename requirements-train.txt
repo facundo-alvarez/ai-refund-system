@@ -1,0 +1,10 @@
+# Extra dependencies needed to run src/train.py and src/jobs.py outside
+# of the worker Docker image (which already ships torch/torchvision).
+# Install on top of requirements.txt: pip install -r requirements.txt -r requirements-train.txt
+#
+# For a CUDA build, follow the selector at https://pytorch.org/get-started/locally/
+# instead of installing torch/torchvision from this file.
+torch==2.12.0
+torchvision==0.27.0
+pandas==3.0.3
+numpy==2.4.4

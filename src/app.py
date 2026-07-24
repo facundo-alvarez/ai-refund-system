@@ -4,14 +4,23 @@ import os
 import requests
 from datetime import datetime
 import base64
+from db import DatabaseInitializer
 
 UPLOAD_FOLDER = "images"
+DB_PATH = os.path.join("instance", "database.db")
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Ensure the schema (and seed data) exists before the first request.
+# Runs both under `python app.py` and `flask run` since it happens at import time.
+_db_init = DatabaseInitializer(DB_PATH)
+_db_init.setup_database()
+_db_init.close()
 
 app = Flask(__name__)
 
 def __get_db_connection():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 

@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 class DatabaseInitializer:
@@ -17,6 +18,7 @@ class DatabaseInitializer:
         Args:
             db_path (str): Path to the SQLite database file.
         """
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON;")
@@ -91,6 +93,6 @@ class DatabaseInitializer:
 
 
 if __name__ == "__main__":
-    db = DatabaseInitializer("database.db")
+    db = DatabaseInitializer("instance/database.db")
     db.setup_database()
     db.close()

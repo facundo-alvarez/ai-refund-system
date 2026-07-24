@@ -2,3 +2,12 @@
 *.pyc
 __pycache__
 redis-data
+
+# Runtime/data directories - bind-mounted by compose.yaml at runtime,
+# no need to bake local copies into the image.
+data
+src/instance
+src/images
+src/models
+.venv
+.git
